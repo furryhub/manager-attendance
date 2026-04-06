@@ -54,7 +54,6 @@
       to   { opacity:1; transform:translateY(0); }
     }
 
-    /* ── Header ── */
     header { text-align:center; margin-bottom:28px; }
     .logo {
       width:52px; height:52px; border-radius:50%;
@@ -71,7 +70,6 @@
     header h1 em { font-style:italic; color:var(--accent); }
     header p { margin-top:7px; font-size:.88rem; color:var(--muted); }
 
-    /* ── Clock ── */
     .clock {
       background:var(--ink); color:#fff;
       border-radius:var(--r); padding:14px 20px;
@@ -82,7 +80,6 @@
     .clock .time { font-family:'DM Serif Display',serif; font-size:1.85rem; letter-spacing:-.4px; }
     .clock .date { font-size:.8rem; opacity:.65; text-align:right; line-height:1.6; }
 
-    /* ── Banners ── */
     .banner {
       border-radius:var(--rs); padding:11px 14px;
       font-size:.82rem; font-weight:500; line-height:1.5;
@@ -92,14 +89,12 @@
     .banner.warn { background:var(--amber-bg); color:var(--amber); border:1px solid #fcd34d; }
     .banner.err  { background:var(--red-bg);   color:var(--red);   border:1px solid #fca5a5; }
 
-    /* ── Card ── */
     .card {
       background:var(--surface); border:1px solid var(--border);
       border-radius:var(--r); padding:26px 24px 22px;
       box-shadow:var(--shadow);
     }
 
-    /* ── Select ── */
     .lbl { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:600; color:var(--muted); display:block; margin-bottom:7px; }
     .sel-wrap { position:relative; margin-bottom:20px; }
     .sel-wrap select {
@@ -117,7 +112,6 @@
       pointer-events:none;
     }
 
-    /* ── Timeline ── */
     .timeline {
       display:flex; align-items:stretch; gap:0;
       margin-bottom:20px;
@@ -130,10 +124,7 @@
       transition:background .25s;
       position:relative;
     }
-    .tl-item + .tl-item {
-      border-left:1.5px solid var(--border);
-    }
-    /* arrow connector */
+    .tl-item + .tl-item { border-left:1.5px solid var(--border); }
     .tl-item + .tl-item::before {
       content:'→';
       position:absolute; left:-13px; top:50%;
@@ -142,9 +133,7 @@
       background:var(--border);
       width:26px; height:26px;
       display:flex; align-items:center; justify-content:center;
-      border-radius:50%;
-      z-index:1;
-      line-height:1;
+      border-radius:50%; z-index:1; line-height:1;
     }
     .tl-lbl { font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--muted); margin-bottom:5px; }
     .tl-val { font-family:'DM Serif Display',serif; font-size:1.15rem; color:#ccc; font-style:italic; }
@@ -156,7 +145,6 @@
     .tl-item.to .tl-lbl { color:var(--amber); }
     .tl-item.to .tl-val { color:var(--amber); font-style:normal; }
 
-    /* duration badge */
     .dur-badge {
       display:none; text-align:center;
       margin-bottom:18px;
@@ -168,7 +156,6 @@
     }
     .dur-badge.show { display:block; }
 
-    /* ── Buttons ── */
     .btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .btn {
       border:none; cursor:pointer; border-radius:var(--rs);
@@ -185,13 +172,21 @@
     .btn-out { background:var(--surface); color:var(--ink); border:1.5px solid var(--border); }
     .btn-out:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
 
-    .spin {
-      width:15px; height:15px; border-radius:50%;
-      border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
-      animation:rot .55s linear infinite; display:none;
+    /* Slim pulse bar replaces spinner — feels faster */
+    .pulse-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      background-size: 200% 100%;
+      animation: pulse-move 1s linear infinite;
+      border-radius: 2px;
+      display: none;
+      margin-bottom: 10px;
     }
-    .btn-out .spin { border-color:rgba(15,14,23,.15); border-top-color:var(--ink); }
-    @keyframes rot { to { transform:rotate(360deg); } }
+    .pulse-bar.show { display: block; }
+    @keyframes pulse-move {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
 
     .hr { height:1px; background:var(--border); margin:20px 0; }
 
@@ -201,7 +196,6 @@
       min-height:38px; white-space:pre-line;
     }
 
-    /* ── Toast ── */
     #toast {
       position:fixed; bottom:24px; left:50%;
       transform:translateX(-50%) translateY(10px);
@@ -232,7 +226,6 @@
     <p>Select your name and record your day</p>
   </header>
 
-  <!-- Clock -->
   <div class="clock">
     <div>
       <div class="lbl">Current Time</div>
@@ -241,13 +234,11 @@
     <div class="date" id="clockDate">Loading…</div>
   </div>
 
-  <!-- Banners -->
   <div class="banner warn" id="bannerSetup">
     ⚠️ <span><strong>Setup needed:</strong> Open this file in a text editor, find <code>SCRIPT_URL</code> near the bottom, and replace it with your Google Apps Script URL.</span>
   </div>
   <div class="banner err" id="bannerErr"></div>
 
-  <!-- Card -->
   <div class="card">
 
     <label class="lbl" for="nameSelect">Your Name</label>
@@ -278,7 +269,9 @@
       </select>
     </div>
 
-    <!-- Timeline -->
+    <!-- Slim loading bar (replaces spinner) -->
+    <div class="pulse-bar" id="pulseBar"></div>
+
     <div class="timeline">
       <div class="tl-item" id="tileIn">
         <div class="tl-lbl">🟢 Check In</div>
@@ -290,17 +283,14 @@
       </div>
     </div>
 
-    <!-- Duration badge -->
     <div class="dur-badge" id="durBadge"></div>
 
-    <!-- Buttons -->
     <div class="btns">
       <button class="btn btn-in"  id="btnIn"  disabled>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
           <polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
         </svg>
-        <span class="spin" id="spinIn"></span>
         <span>Check In</span>
       </button>
       <button class="btn btn-out" id="btnOut" disabled>
@@ -308,7 +298,6 @@
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
           <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-        <span class="spin" id="spinOut"></span>
         <span>Check Out</span>
       </button>
     </div>
@@ -337,7 +326,6 @@
   const isDemo = () => !SCRIPT_URL || SCRIPT_URL === "PASTE_YOUR_SCRIPT_URL_HERE";
   const el     = id  => document.getElementById(id);
 
-  // ── Boot ─────────────────────────────────────────────────────
   startClock();
   if (!isDemo()) el("bannerSetup").classList.remove("show");
 
@@ -349,7 +337,6 @@
   el("btnIn").addEventListener("click",  doCheckIn);
   el("btnOut").addEventListener("click", doCheckOut);
 
-  // ── Clock ─────────────────────────────────────────────────────
   function startClock() {
     const tick = () => {
       const n = new Date();
@@ -359,12 +346,13 @@
     tick(); setInterval(tick, 1000);
   }
 
-  // ── JSONP (bypasses CORS for local HTML files) ────────────────
+  // ── JSONP with shorter timeout ────────────────────────────────
   function api(params) {
     return new Promise((resolve, reject) => {
       const cb     = "_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
       const script = document.createElement("script");
-      const timer  = setTimeout(() => { cleanup(); reject(new Error("Timed out")); }, 15000);
+      // Reduced from 15s → 8s; feels much snappier on failure
+      const timer  = setTimeout(() => { cleanup(); reject(new Error("Timed out")); }, 8000);
 
       function cleanup() {
         clearTimeout(timer);
@@ -372,7 +360,7 @@
         if (script.parentNode) script.parentNode.removeChild(script);
       }
 
-      window[cb]    = data  => { cleanup(); resolve(data); };
+      window[cb]     = data => { cleanup(); resolve(data); };
       script.onerror = ()   => { cleanup(); reject(new Error("Script load failed — check SCRIPT_URL")); };
 
       const url = new URL(SCRIPT_URL);
@@ -385,7 +373,7 @@
   // ── Fetch today's status ──────────────────────────────────────
   async function fetchStatus() {
     if (isDemo()) { setSummary("Demo mode — data won't be saved."); return; }
-    setBusy(true);
+    setPulse(true);
     setSummary("Fetching today's status…");
     hideErr();
     try {
@@ -401,12 +389,13 @@
     } catch (e) {
       showErr("Cannot reach the server. Check your SCRIPT_URL and that deployment access is set to 'Anyone'.");
     } finally {
-      setBusy(false);
+      setPulse(false);
       render();
     }
   }
 
-  // ── Check In ─────────────────────────────────────────────────
+  // ── Check In — OPTIMISTIC ─────────────────────────────────────
+  // UI updates instantly; server call happens in background.
   async function doCheckIn() {
     if (S.busy || S.checkedIn || !S.name) return;
     hideErr();
@@ -416,28 +405,40 @@
       render(); toast("Checked in (demo — not saved)", "ok"); return;
     }
 
-    setSpinner("In", true);
+    // 1. Instant optimistic update
+    const optimisticTime = nowTime();
+    S.checkedIn = true;
+    S.inTime    = optimisticTime;
+    S.busy      = true;
+    render();
+    toast("Checking in…", "");
+    setPulse(true);
+
+    // 2. Background server call
     try {
       const res = await api({ action: "checkin", name: S.name });
       if (res.success) {
-        S.checkedIn = true; S.inTime = res.time;
-        toast("✓ Checked in at " + res.time, "ok");
-        render();
+        S.inTime = res.time || optimisticTime;   // use server time if returned
+        toast("✓ Checked in at " + S.inTime, "ok");
       } else {
-        showErr(res.message || "Check-in failed.");
-        // Re-sync so UI matches the sheet
-        S.busy = false;
-        await fetchStatus();
+        // Server rejected — roll back
+        S.checkedIn = false; S.inTime = "";
+        showErr(res.message || "Check-in failed. Please try again.");
+        toast("Check-in failed", "err");
       }
     } catch (e) {
+      // Network error — roll back
+      S.checkedIn = false; S.inTime = "";
       showErr("Network error — please try again.");
-      render();
+      toast("Network error", "err");
     } finally {
-      setSpinner("In", false);
+      S.busy = false;
+      setPulse(false);
+      render();
     }
   }
 
-  // ── Check Out ─────────────────────────────────────────────────
+  // ── Check Out — OPTIMISTIC ────────────────────────────────────
   async function doCheckOut() {
     if (S.busy || !S.checkedIn || S.checkedOut || !S.name) return;
     hideErr();
@@ -447,25 +448,36 @@
       render(); toast("Checked out (demo — not saved)", "ok"); return;
     }
 
-    setSpinner("Out", true);
+    // 1. Instant optimistic update
+    const optimisticTime = nowTime();
+    S.checkedOut = true;
+    S.outTime    = optimisticTime;
+    S.busy       = true;
+    render();
+    toast("Checking out…", "");
+    setPulse(true);
+
+    // 2. Background server call
     try {
       const res = await api({ action: "checkout", name: S.name });
       if (res.success) {
-        S.checkedOut = true;
-        S.outTime    = res.time;
-        S.duration   = res.duration ? String(res.duration) : "";
-        toast("✓ Checked out at " + res.time + (res.duration ? " · " + res.duration + " hrs" : ""), "ok");
-        render();
+        S.outTime  = res.time     || optimisticTime;
+        S.duration = res.duration ? String(res.duration) : "";
+        toast("✓ Checked out at " + S.outTime + (res.duration ? " · " + res.duration + " hrs" : ""), "ok");
       } else {
-        showErr(res.message || "Check-out failed.");
-        S.busy = false;
-        await fetchStatus();
+        // Roll back
+        S.checkedOut = false; S.outTime = ""; S.duration = "";
+        showErr(res.message || "Check-out failed. Please try again.");
+        toast("Check-out failed", "err");
       }
     } catch (e) {
+      S.checkedOut = false; S.outTime = ""; S.duration = "";
       showErr("Network error — please try again.");
-      render();
+      toast("Network error", "err");
     } finally {
-      setSpinner("Out", false);
+      S.busy = false;
+      setPulse(false);
+      render();
     }
   }
 
@@ -476,7 +488,6 @@
     el("btnIn").disabled  = !has || S.checkedIn  || S.checkedOut || S.busy;
     el("btnOut").disabled = !has || !S.checkedIn || S.checkedOut || S.busy;
 
-    // Check-in tile
     const tileIn = el("tileIn"), inV = el("inVal");
     if (S.inTime) {
       inV.textContent = S.inTime; inV.classList.add("has");
@@ -486,7 +497,6 @@
       tileIn.classList.remove("ti");
     }
 
-    // Check-out tile
     const tileOut = el("tileOut"), outV = el("outVal");
     if (S.outTime) {
       outV.textContent = S.outTime; outV.classList.add("has");
@@ -496,7 +506,6 @@
       tileOut.classList.remove("to");
     }
 
-    // Duration badge
     const dur = el("durBadge");
     if (S.checkedIn && S.checkedOut && S.duration) {
       dur.textContent = "⏱ Total hours today: " + S.duration + " hrs";
@@ -505,7 +514,6 @@
       dur.classList.remove("show");
     }
 
-    // Summary text
     if (!has) {
       setSummary("Select your name to see today's status.");
     } else if (S.checkedIn && S.checkedOut) {
@@ -523,18 +531,8 @@
     hideErr(); render();
   }
 
-  function setBusy(v) {
-    S.busy = v;
-    el("btnIn").disabled  = v || S.checkedIn  || !S.name;
-    el("btnOut").disabled = v || !S.checkedIn || S.checkedOut || !S.name;
-  }
-
-  function setSpinner(which, v) {
-    S.busy = v;
-    el("spin" + which).style.display = v ? "block" : "none";
-    // Disable both buttons while loading
-    el("btnIn").disabled  = v || S.checkedIn  || !S.name;
-    el("btnOut").disabled = v || !S.checkedIn || S.checkedOut || !S.name;
+  function setPulse(v) {
+    el("pulseBar").classList.toggle("show", v);
   }
 
   function setSummary(t) { el("summary").textContent = t; }
