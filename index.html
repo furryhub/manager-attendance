@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:       #0f0e17;
+      --paper:     #faf9f6;
+      --surface:   #ffffff;
+      --accent:    #e8572a;
+      --muted:     #8a8790;
+      --border:    #e8e6e1;
+      --green:     #166534;
+      --green-bg:  #dcfce7;
+      --amber:     #92400e;
+      --amber-bg:  #fef3c7;
+      --red:       #991b1b;
+      --red-bg:    #fee2e2;
+      --shadow:    0 2px 12px rgba(15,14,23,.07), 0 1px 3px rgba(15,14,23,.05);
+      --shadow-lg: 0 8px 40px rgba(15,14,23,.13), 0 2px 8px rgba(15,14,23,.06);
+      --r:  16px;
+      --rs: 10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 16px 56px;
+      overflow-x: hidden;
+    }
+    body::before, body::after {
+      content: ''; position: fixed; border-radius: 50%;
+      pointer-events: none; filter: blur(90px); opacity: .13; z-index: 0;
+    }
+    body::before { width:500px; height:500px; background:var(--accent); top:-150px; right:-100px; }
+    body::after  { width:360px; height:360px; background:#6c63ff; bottom:-80px; left:-60px; }
+
+    .wrapper {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 460px;
+      animation: up .45s ease both;
+    }
+    @keyframes up {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── Header ── */
+    header { text-align:center; margin-bottom:28px; }
+    .logo {
+      width:52px; height:52px; border-radius:50%;
+      background:var(--ink); display:inline-flex;
+      align-items:center; justify-content:center;
+      margin-bottom:14px;
+      box-shadow:0 4px 18px rgba(15,14,23,.22);
+    }
+    header h1 {
+      font-family:'DM Serif Display',serif;
+      font-size:clamp(1.75rem,5vw,2.3rem);
+      letter-spacing:-.4px; line-height:1.1;
+    }
+    header h1 em { font-style:italic; color:var(--accent); }
+    header p { margin-top:7px; font-size:.88rem; color:var(--muted); }
+
+    /* ── Clock ── */
+    .clock {
+      background:var(--ink); color:#fff;
+      border-radius:var(--r); padding:14px 20px;
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:14px; box-shadow:var(--shadow-lg);
+    }
+    .clock .lbl  { font-size:.68rem; letter-spacing:.09em; text-transform:uppercase; opacity:.5; margin-bottom:2px; }
+    .clock .time { font-family:'DM Serif Display',serif; font-size:1.85rem; letter-spacing:-.4px; }
+    .clock .date { font-size:.8rem; opacity:.65; text-align:right; line-height:1.6; }
+
+    /* ── Banners ── */
+    .banner {
+      border-radius:var(--rs); padding:11px 14px;
+      font-size:.82rem; font-weight:500; line-height:1.5;
+      margin-bottom:12px; display:none; gap:8px; align-items:flex-start;
+    }
+    .banner.show { display:flex; }
+    .banner.warn { background:var(--amber-bg); color:var(--amber); border:1px solid #fcd34d; }
+    .banner.err  { background:var(--red-bg);   color:var(--red);   border:1px solid #fca5a5; }
+
+    /* ── Card ── */
+    .card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r); padding:26px 24px 22px;
+      box-shadow:var(--shadow);
+    }
+
+    /* ── Select ── */
+    .lbl { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:600; color:var(--muted); display:block; margin-bottom:7px; }
+    .sel-wrap { position:relative; margin-bottom:20px; }
+    .sel-wrap select {
+      width:100%; appearance:none;
+      background:var(--paper); border:1.5px solid var(--border);
+      border-radius:var(--rs); padding:13px 42px 13px 15px;
+      font-family:'DM Sans',sans-serif; font-size:.97rem; font-weight:500;
+      color:var(--ink); cursor:pointer; outline:none; transition:border-color .18s;
+    }
+    .sel-wrap select:focus { border-color:var(--ink); }
+    .sel-wrap::after {
+      content:''; position:absolute; right:15px; top:50%;
+      transform:translateY(-50%); width:10px; height:6px;
+      background:var(--muted); clip-path:polygon(0 0,100% 0,50% 100%);
+      pointer-events:none;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      display:flex; align-items:stretch; gap:0;
+      margin-bottom:20px;
+      border:1.5px solid var(--border); border-radius:var(--rs);
+      overflow:hidden;
+    }
+    .tl-item {
+      flex:1; padding:14px 16px;
+      background:#f8f7f4;
+      transition:background .25s;
+      position:relative;
+    }
+    .tl-item + .tl-item {
+      border-left:1.5px solid var(--border);
+    }
+    /* arrow connector */
+    .tl-item + .tl-item::before {
+      content:'→';
+      position:absolute; left:-13px; top:50%;
+      transform:translateY(-50%);
+      font-size:.85rem; color:var(--muted);
+      background:var(--border);
+      width:26px; height:26px;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:50%;
+      z-index:1;
+      line-height:1;
+    }
+    .tl-lbl { font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--muted); margin-bottom:5px; }
+    .tl-val { font-family:'DM Serif Display',serif; font-size:1.15rem; color:#ccc; font-style:italic; }
+    .tl-val.has { color:var(--ink); font-style:normal; }
+    .tl-item.ti { background:var(--green-bg); }
+    .tl-item.ti .tl-lbl { color:var(--green); }
+    .tl-item.ti .tl-val { color:var(--green); font-style:normal; }
+    .tl-item.to { background:var(--amber-bg); }
+    .tl-item.to .tl-lbl { color:var(--amber); }
+    .tl-item.to .tl-val { color:var(--amber); font-style:normal; }
+
+    /* duration badge */
+    .dur-badge {
+      display:none; text-align:center;
+      margin-bottom:18px;
+      font-size:.82rem; font-weight:600;
+      color:var(--green);
+      background:var(--green-bg);
+      border:1px solid #86efac;
+      border-radius:var(--rs); padding:8px 14px;
+    }
+    .dur-badge.show { display:block; }
+
+    /* ── Buttons ── */
+    .btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btn {
+      border:none; cursor:pointer; border-radius:var(--rs);
+      padding:14px 10px; font-family:'DM Sans',sans-serif;
+      font-size:.93rem; font-weight:600;
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      transition:transform .13s, box-shadow .13s, opacity .2s;
+    }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn:active:not(:disabled) { transform:scale(.97); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; }
+    .btn-in  { background:var(--ink); color:#fff; box-shadow:0 4px 16px rgba(15,14,23,.18); }
+    .btn-in:hover:not(:disabled)  { box-shadow:0 6px 24px rgba(15,14,23,.26); }
+    .btn-out { background:var(--surface); color:var(--ink); border:1.5px solid var(--border); }
+    .btn-out:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+
+    .spin {
+      width:15px; height:15px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+      animation:rot .55s linear infinite; display:none;
+    }
+    .btn-out .spin { border-color:rgba(15,14,23,.15); border-top-color:var(--ink); }
+    @keyframes rot { to { transform:rotate(360deg); } }
+
+    .hr { height:1px; background:var(--border); margin:20px 0; }
+
+    .summary {
+      font-size:.875rem; color:var(--muted);
+      text-align:center; line-height:1.7;
+      min-height:38px; white-space:pre-line;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position:fixed; bottom:24px; left:50%;
+      transform:translateX(-50%) translateY(10px);
+      background:var(--ink); color:#fff;
+      padding:11px 22px; border-radius:40px;
+      font-size:.86rem; font-weight:500;
+      box-shadow:var(--shadow-lg);
+      opacity:0; transition:opacity .22s, transform .22s;
+      pointer-events:none; white-space:nowrap; z-index:999;
+    }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    #toast.ok  { background:#166534; }
+    #toast.err { background:#991b1b; }
+
+    footer { margin-top:18px; text-align:center; font-size:.77rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </div>
+    <h1>Manager <em>Attendance</em></h1>
+    <p>Select your name and record your day</p>
+  </header>
+
+  <!-- Clock -->
+  <div class="clock">
+    <div>
+      <div class="lbl">Current Time</div>
+      <div class="time" id="clockTime">--:-- --</div>
+    </div>
+    <div class="date" id="clockDate">Loading…</div>
+  </div>
+
+  <!-- Banners -->
+  <div class="banner warn" id="bannerSetup">
+    ⚠️ <span><strong>Setup needed:</strong> Open this file in a text editor, find <code>SCRIPT_URL</code> near the bottom, and replace it with your Google Apps Script URL.</span>
+  </div>
+  <div class="banner err" id="bannerErr"></div>
+
+  <!-- Card -->
+  <div class="card">
+
+    <label class="lbl" for="nameSelect">Your Name</label>
+    <div class="sel-wrap">
+      <select id="nameSelect">
+        <option value="">— Select your name —</option>
+        <!-- ✏ ADD YOUR MANAGER NAMES BELOW -->
+        <option>Lokesh</option>
+        <option>Deepu</option>
+        <option>Bunty</option>
+        <option>Rajesh</option>
+        <option>Sanju</option>
+        <option>Chota Deepak</option>
+        <option>Ankit</option>
+        <option>Ravi</option>
+        <!-- ✏ END OF NAME LIST -->
+      </select>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+      <div class="tl-item" id="tileIn">
+        <div class="tl-lbl">🟢 Check In</div>
+        <div class="tl-val" id="inVal">—</div>
+      </div>
+      <div class="tl-item" id="tileOut">
+        <div class="tl-lbl">🔴 Check Out</div>
+        <div class="tl-val" id="outVal">—</div>
+      </div>
+    </div>
+
+    <!-- Duration badge -->
+    <div class="dur-badge" id="durBadge"></div>
+
+    <!-- Buttons -->
+    <div class="btns">
+      <button class="btn btn-in"  id="btnIn"  disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        <span class="spin" id="spinIn"></span>
+        <span>Check In</span>
+      </button>
+      <button class="btn btn-out" id="btnOut" disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span class="spin" id="spinOut"></span>
+        <span>Check Out</span>
+      </button>
+    </div>
+
+    <div class="hr"></div>
+    <div class="summary" id="summary">Select your name to see today's status.</div>
+  </div>
+
+  <footer>Each employee's data is saved to their own sheet in Google Sheets.</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ============================================================
+  // ✏ PASTE YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL HERE
+  // ============================================================
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIEu0y_LYs-3mJg76cqYNELd3iImaUqNP9lyMjEGNHEeFADpfH8nYFmrlH-nebcYQs/exec";
+  // ============================================================
+
+  const S = {
+    name: "", checkedIn: false, checkedOut: false,
+    inTime: "", outTime: "", duration: "", busy: false
+  };
+
+  const isDemo = () => !SCRIPT_URL || SCRIPT_URL === "PASTE_YOUR_SCRIPT_URL_HERE";
+  const el     = id  => document.getElementById(id);
+
+  // ── Boot ─────────────────────────────────────────────────────
+  startClock();
+  if (!isDemo()) el("bannerSetup").classList.remove("show");
+
+  el("nameSelect").addEventListener("change", () => {
+    S.name = el("nameSelect").value;
+    resetState();
+    if (S.name) fetchStatus();
+  });
+  el("btnIn").addEventListener("click",  doCheckIn);
+  el("btnOut").addEventListener("click", doCheckOut);
+
+  // ── Clock ─────────────────────────────────────────────────────
+  function startClock() {
+    const tick = () => {
+      const n = new Date();
+      el("clockTime").textContent = n.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true });
+      el("clockDate").innerHTML   = n.toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long" }) + "<br>" + n.getFullYear();
+    };
+    tick(); setInterval(tick, 1000);
+  }
+
+  // ── JSONP (bypasses CORS for local HTML files) ────────────────
+  function api(params) {
+    return new Promise((resolve, reject) => {
+      const cb     = "_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+      const script = document.createElement("script");
+      const timer  = setTimeout(() => { cleanup(); reject(new Error("Timed out")); }, 15000);
+
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[cb];
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      window[cb]    = data  => { cleanup(); resolve(data); };
+      script.onerror = ()   => { cleanup(); reject(new Error("Script load failed — check SCRIPT_URL")); };
+
+      const url = new URL(SCRIPT_URL);
+      Object.entries({ ...params, callback: cb }).forEach(([k, v]) => url.searchParams.set(k, v));
+      script.src = url.toString();
+      document.head.appendChild(script);
+    });
+  }
+
+  // ── Fetch today's status ──────────────────────────────────────
+  async function fetchStatus() {
+    if (isDemo()) { setSummary("Demo mode — data won't be saved."); return; }
+    setBusy(true);
+    setSummary("Fetching today's status…");
+    hideErr();
+    try {
+      const res = await api({ action: "getStatus", name: S.name });
+      if (res.success) {
+        S.checkedIn  = !!res.checkedIn;
+        S.checkedOut = !!res.checkedOut;
+        S.inTime     = res.inTime  || "";
+        S.outTime    = res.outTime || "";
+      } else {
+        showErr(res.message || "Could not load status.");
+      }
+    } catch (e) {
+      showErr("Cannot reach the server. Check your SCRIPT_URL and that deployment access is set to 'Anyone'.");
+    } finally {
+      setBusy(false);
+      render();
+    }
+  }
+
+  // ── Check In ─────────────────────────────────────────────────
+  async function doCheckIn() {
+    if (S.busy || S.checkedIn || !S.name) return;
+    hideErr();
+
+    if (isDemo()) {
+      S.checkedIn = true; S.inTime = nowTime();
+      render(); toast("Checked in (demo — not saved)", "ok"); return;
+    }
+
+    setSpinner("In", true);
+    try {
+      const res = await api({ action: "checkin", name: S.name });
+      if (res.success) {
+        S.checkedIn = true; S.inTime = res.time;
+        toast("✓ Checked in at " + res.time, "ok");
+        render();
+      } else {
+        showErr(res.message || "Check-in failed.");
+        // Re-sync so UI matches the sheet
+        S.busy = false;
+        await fetchStatus();
+      }
+    } catch (e) {
+      showErr("Network error — please try again.");
+      render();
+    } finally {
+      setSpinner("In", false);
+    }
+  }
+
+  // ── Check Out ─────────────────────────────────────────────────
+  async function doCheckOut() {
+    if (S.busy || !S.checkedIn || S.checkedOut || !S.name) return;
+    hideErr();
+
+    if (isDemo()) {
+      S.checkedOut = true; S.outTime = nowTime();
+      render(); toast("Checked out (demo — not saved)", "ok"); return;
+    }
+
+    setSpinner("Out", true);
+    try {
+      const res = await api({ action: "checkout", name: S.name });
+      if (res.success) {
+        S.checkedOut = true;
+        S.outTime    = res.time;
+        S.duration   = res.duration ? String(res.duration) : "";
+        toast("✓ Checked out at " + res.time + (res.duration ? " · " + res.duration + " hrs" : ""), "ok");
+        render();
+      } else {
+        showErr(res.message || "Check-out failed.");
+        S.busy = false;
+        await fetchStatus();
+      }
+    } catch (e) {
+      showErr("Network error — please try again.");
+      render();
+    } finally {
+      setSpinner("Out", false);
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function render() {
+    const has = !!S.name;
+
+    el("btnIn").disabled  = !has || S.checkedIn  || S.checkedOut || S.busy;
+    el("btnOut").disabled = !has || !S.checkedIn || S.checkedOut || S.busy;
+
+    // Check-in tile
+    const tileIn = el("tileIn"), inV = el("inVal");
+    if (S.inTime) {
+      inV.textContent = S.inTime; inV.classList.add("has");
+      tileIn.classList.add("ti");
+    } else {
+      inV.textContent = "—"; inV.classList.remove("has");
+      tileIn.classList.remove("ti");
+    }
+
+    // Check-out tile
+    const tileOut = el("tileOut"), outV = el("outVal");
+    if (S.outTime) {
+      outV.textContent = S.outTime; outV.classList.add("has");
+      tileOut.classList.add("to");
+    } else {
+      outV.textContent = "—"; outV.classList.remove("has");
+      tileOut.classList.remove("to");
+    }
+
+    // Duration badge
+    const dur = el("durBadge");
+    if (S.checkedIn && S.checkedOut && S.duration) {
+      dur.textContent = "⏱ Total hours today: " + S.duration + " hrs";
+      dur.classList.add("show");
+    } else {
+      dur.classList.remove("show");
+    }
+
+    // Summary text
+    if (!has) {
+      setSummary("Select your name to see today's status.");
+    } else if (S.checkedIn && S.checkedOut) {
+      setSummary(`${S.name} has completed attendance for today.\nIn: ${S.inTime}  →  Out: ${S.outTime}`);
+    } else if (S.checkedIn) {
+      setSummary(`${S.name} is checked in since ${S.inTime}.\nDon't forget to check out before leaving!`);
+    } else {
+      setSummary(`${S.name} hasn't checked in yet today.`);
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function resetState() {
+    Object.assign(S, { checkedIn:false, checkedOut:false, inTime:"", outTime:"", duration:"", busy:false });
+    hideErr(); render();
+  }
+
+  function setBusy(v) {
+    S.busy = v;
+    el("btnIn").disabled  = v || S.checkedIn  || !S.name;
+    el("btnOut").disabled = v || !S.checkedIn || S.checkedOut || !S.name;
+  }
+
+  function setSpinner(which, v) {
+    S.busy = v;
+    el("spin" + which).style.display = v ? "block" : "none";
+    // Disable both buttons while loading
+    el("btnIn").disabled  = v || S.checkedIn  || !S.name;
+    el("btnOut").disabled = v || !S.checkedIn || S.checkedOut || !S.name;
+  }
+
+  function setSummary(t) { el("summary").textContent = t; }
+  function showErr(msg)  { const b = el("bannerErr"); b.textContent = "❌ " + msg; b.classList.add("show"); }
+  function hideErr()     { el("bannerErr").classList.remove("show"); }
+
+  let _tt;
+  function toast(msg, type = "") {
+    const t = el("toast");
+    t.textContent = msg; t.className = "show " + type;
+    clearTimeout(_tt); _tt = setTimeout(() => { t.className = ""; }, 3500);
+  }
+
+  function nowTime() {
+    return new Date().toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true });
+  }
+</script>
+</body>
+</html>
